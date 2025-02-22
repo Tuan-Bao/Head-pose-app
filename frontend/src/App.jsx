@@ -45,7 +45,16 @@ function App() {
 
   const startWebcam = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const constraints = {
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user", // Use front camera on mobile devices
+          aspectRatio: { ideal: 16/9 }
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
@@ -90,25 +99,24 @@ function App() {
 
   return (
     <div className="container">
-      {/* <Header /> */}
-      
-      <main>
-        <VideoFeed 
-          videoRef={videoRef}
-          isRunning={isRunning}
-          onMovement={sendMovementData} // Add this prop to send movement data
-        />
+      {/* Video Feed */}
+      <VideoFeed 
+        videoRef={videoRef}
+        isRunning={isRunning}
+        onMovement={sendMovementData}
+      />
 
-        <Controls 
-          isRunning={isRunning}
-          toggleTracking={toggleTracking}
-          mode={mode}
-          setMode={setMode}
-          sensitivity={sensitivity}
-          setSensitivity={setSensitivity}
-        />
-      </main>
+      {/* Controls */}
+      <Controls 
+        isRunning={isRunning}
+        toggleTracking={toggleTracking}
+        mode={mode}
+        setMode={setMode}
+        sensitivity={sensitivity}
+        setSensitivity={setSensitivity}
+      />
 
+      {/* Status Footer */}
       <Footer 
         isRunning={isRunning}
         mode={mode}
