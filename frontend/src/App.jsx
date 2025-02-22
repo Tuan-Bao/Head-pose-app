@@ -11,6 +11,37 @@ function App() {
   const [sensitivity, setSensitivity] = useState(5)
   const videoRef = useRef(null)
   const streamRef = useRef(null)
+  const wsRef = useRef(null)
+
+  // Add WebSocket connection
+  const connectWebSocket = () => {
+    wsRef.current = new WebSocket('ws://localhost:8000/ws')
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket Connected')
+    }
+    
+    wsRef.current.onclose = () => {
+      console.log('WebSocket Disconnected')
+    }
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket Error:', error)
+    }
+  }
+
+  // Function to send movement data to backend
+  const sendMovementData = (dx, dy) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      const data = {
+        mode,
+        dx,
+        dy,
+        sensitivity
+      }
+      wsRef.current.send(JSON.stringify(data))
+    }
+  }
 
   const startWebcam = async () => {
     try {
@@ -37,15 +68,23 @@ function App() {
   const toggleTracking = () => {
     if (!isRunning) {
       startWebcam()
+      connectWebSocket() // Connect WebSocket when starting
     } else {
       stopWebcam()
+      if (wsRef.current) {
+        wsRef.current.close() // Close WebSocket when stopping
+      }
     }
     setIsRunning(!isRunning)
   }
 
+  // Clean up WebSocket and webcam on unmount
   useEffect(() => {
     return () => {
       stopWebcam()
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
     }
   }, [])
 
@@ -57,6 +96,7 @@ function App() {
         <VideoFeed 
           videoRef={videoRef}
           isRunning={isRunning}
+          onMovement={sendMovementData} // Add this prop to send movement data
         />
 
         <Controls 
